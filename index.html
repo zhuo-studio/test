@@ -10,17 +10,14 @@
       --page-bg: #fff0f3;
       
       /* 
-         ASPECT RATIO & SIZING LOGIC:
-         Target Unfolded Ratio: 14 (width) : 8.5 (height)
+         Fallback unit (JavaScript will calculate the exact value immediately)
       */
-      --unit: min(calc(85vw / 14), calc(60vh / 8.5));
+      --unit: 10px;
       
       --card-width: calc(7 * var(--unit));   /* The folded width (center panel) */
       --card-height: calc(8.5 * var(--unit));
       
       --card-radius: 10px;
-
-      /* REMOVED: --thickness variable */
     }
 
     * { box-sizing: border-box; }
@@ -146,17 +143,10 @@
     }
 
     @media (orientation: portrait) {
-      :root {
-        /* 
-           In portrait, the card is rotated 90deg.
-           The "Width" (14 units) runs along the viewport Height (vh).
-           The "Height" (8.5 units) runs along the viewport Width (vw).
-        */
-        --unit: min(calc(95vh / 14), calc(95vw / 8.5));
-        
-        --card-width: calc(7 * var(--unit));
-        --card-height: calc(8.5 * var(--unit));
-      }
+      /* 
+         REMOVED: The :root block with complex calc() logic. 
+         JS now handles the unit calculation for portrait mode.
+      */
 
       .layout-wrapper {
         position: absolute;
@@ -384,6 +374,49 @@
 
     // REPLACE THIS WITH YOUR ACTUAL EMAIL
     const emailAddress = "example@example.com"; 
+
+    // --- NEW: DYNAMIC SIZING LOGIC ---
+    function updateSize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const isPortrait = h > w;
+
+      // 1. Define Constraints
+      const MAX_CARD_WIDTH_PX = 800; // Cap the unfolded width at 800px
+      const ASPECT_W = 14;           // Total unfolded width units
+      const ASPECT_H = 8.5;          // Total height units
+      const SAFE_MARGIN = 0.75;      // 95% of screen size
+
+      let unit;
+
+      if (isPortrait) {
+        // Card is rotated 90deg visually
+        // The card's "Width" (14 units) must fit in the screen Height
+        // The card's "Height" (8.5 units) must fit in the screen Width
+        const maxUnitBasedOnHeight = (h * SAFE_MARGIN) / ASPECT_W;
+        const maxUnitBasedOnWidth  = (w * SAFE_MARGIN) / ASPECT_H;
+        unit = Math.min(maxUnitBasedOnHeight, maxUnitBasedOnWidth);
+      } else {
+        // Normal Landscape
+        // Card Width (14) -> Screen Width
+        // Card Height (8.5) -> Screen Height
+        const maxUnitBasedOnWidth  = (w * SAFE_MARGIN) / ASPECT_W;
+        const maxUnitBasedOnHeight = (h * SAFE_MARGIN) / ASPECT_H;
+        unit = Math.min(maxUnitBasedOnWidth, maxUnitBasedOnHeight);
+      }
+
+      // 2. Apply Pixel Cap (Don't let it get larger than MAX_CARD_WIDTH_PX)
+      const maxUnitPx = MAX_CARD_WIDTH_PX / ASPECT_W;
+      unit = Math.min(unit, maxUnitPx);
+
+      // 3. Set the variable for CSS to use
+      document.documentElement.style.setProperty('--unit', `${unit}px`);
+    }
+
+    // Update on load and whenever window resizes
+    window.addEventListener('resize', updateSize);
+    updateSize(); 
+    // ---------------------------------
 
     // Toggle Card Logic
     function toggle() {
