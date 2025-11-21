@@ -54,8 +54,8 @@
       /* Gap scales with unit, max 14px */
       gap: min(14px, calc(0.3 * var(--unit)));
 
-      /* Margin scales with unit, max 20px */
-      margin-bottom: min(20px, calc(0.5 * var(--unit)));
+      /* Margin scales with unit, max 22px */
+      margin-bottom: min(22px, calc(0.5 * var(--unit)));
       
       z-index: 20;
     }
@@ -155,10 +155,6 @@
         width: 100vh;
         height: 100vw;
         transform: translate(-50%, -50%) rotate(90deg);
-      }
-      
-      .button-group {
-        margin-bottom: 40px;
       }
     }
 
@@ -385,7 +381,7 @@
       const MAX_CARD_WIDTH_PX = 800; // Cap the unfolded width at 800px
       const ASPECT_W = 14;           // Total unfolded width units
       const ASPECT_H = 8.5;          // Total height units
-      const SAFE_MARGIN = 0.75;      // 95% of screen size
+      const SAFE_MARGIN = 0.76;      // 76% of screen size
 
       let unit;
 
