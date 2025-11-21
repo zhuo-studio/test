@@ -378,26 +378,45 @@
       const isPortrait = h > w;
 
       // 1. Define Constraints
-      const MAX_CARD_WIDTH_PX = 800; // Cap the unfolded width at 800px
-      const ASPECT_W = 14;           // Total unfolded width units
-      const ASPECT_H = 8.5;          // Total height units
-      const SAFE_MARGIN = 0.76;      // 76% of screen size
+      const MAX_CARD_WIDTH_PX = 800; 
+      const ASPECT_W = 14;           
+      const ASPECT_H = 8.5;          
+      
+      // Reserve fixed vertical space for the buttons (approx 50px)
+      // This ensures buttons always fit, even on short landscape screens.
+      const BUTTON_SPACE = 50; 
+      const SAFE_MARGIN = 0.85; // Use 85% of the REMAINING space
 
       let unit;
 
       if (isPortrait) {
-        // Card is rotated 90deg visually
-        // The card's "Width" (14 units) must fit in the screen Height
-        // The card's "Height" (8.5 units) must fit in the screen Width
-        const maxUnitBasedOnHeight = (h * SAFE_MARGIN) / ASPECT_W;
-        const maxUnitBasedOnWidth  = (w * SAFE_MARGIN) / ASPECT_H;
+        // Portrait Mode (Rotated 90deg)
+        // The layout's "Height" runs along the screen Width (w).
+        // The layout's "Width" runs along the screen Height (h).
+        
+        // Calculate available vertical space (Screen Width - Buttons)
+        const availableVertical = Math.max(0, w - BUTTON_SPACE);
+        
+        // Check 1: Fit Card Height (8.5) into available vertical space
+        const maxUnitBasedOnHeight = (availableVertical * SAFE_MARGIN) / ASPECT_H;
+        
+        // Check 2: Fit Card Width (14) into screen Height
+        const maxUnitBasedOnWidth = (h * SAFE_MARGIN) / ASPECT_W;
+        
         unit = Math.min(maxUnitBasedOnHeight, maxUnitBasedOnWidth);
+
       } else {
-        // Normal Landscape
-        // Card Width (14) -> Screen Width
-        // Card Height (8.5) -> Screen Height
-        const maxUnitBasedOnWidth  = (w * SAFE_MARGIN) / ASPECT_W;
-        const maxUnitBasedOnHeight = (h * SAFE_MARGIN) / ASPECT_H;
+        // Landscape Mode (Normal)
+        // Vertical space available = Screen Height - Buttons
+        
+        const availableVertical = Math.max(0, h - BUTTON_SPACE);
+        
+        // Check 1: Fit Card Height (8.5) into available vertical space
+        const maxUnitBasedOnHeight = (availableVertical * SAFE_MARGIN) / ASPECT_H;
+        
+        // Check 2: Fit Card Width (14) into screen Width
+        const maxUnitBasedOnWidth = (w * SAFE_MARGIN) / ASPECT_W;
+        
         unit = Math.min(maxUnitBasedOnWidth, maxUnitBasedOnHeight);
       }
 
