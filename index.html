@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wedding Invitation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      /* UPDATED: A balanced pink-cream background (between #fff7f0 and #ffe6ea) */
+      --page-bg: #fff0f3;
+      
+      /* 
+         ASPECT RATIO & SIZING LOGIC:
+         Target Unfolded Ratio: 14 (width) : 8.5 (height)
+      */
+      --unit: min(calc(95vw / 14), calc(80vh / 8.5));
+      
+      --card-width: calc(7 * var(--unit));   /* The folded width (center panel) */
+      --card-height: calc(8.5 * var(--unit));
+      
+      --card-radius: 10px;
+
+      /* REMOVED: --thickness variable */
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--page-bg);
+      font-family: sans-serif;
+      overflow: hidden; 
+    }
+
+    /* 
+       1. SMOOTH ROTATION 
+       Added transition property here so the rotation animates smoothly.
+    */
+    .layout-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), width 0.6s, height 0.6s;
+    }
+
+    /* BUTTON GROUP */
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      z-index: 20;
+    }
+
+    .action-btn {
+      padding: 12px 24px; 
+      cursor: pointer;
+      background: #c62828;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      
+      /* Unified Font Settings */
+      font-family: "Microsoft YaHei", "SimHei", "Heiti SC", sans-serif; 
+      font-size: 16px; /* Unified size for both lines */
+      
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.2s, background 0.2s;
+      text-align: center;
+      line-height: 1.5; /* Adds space between the two lines */
+    }
+
+    .action-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* RSVP POPUP STYLES */
+    .rsvp-popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      min-width: 200px;
+    }
+
+    .rsvp-popup.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .rsvp-popup .action-btn {
+      background: #444;
+      width: 100%;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 90;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .card-scene {
+      width: var(--card-width);
+      height: var(--card-height);
+      perspective: 1500px; 
+    }
+
+    @media (orientation: portrait) {
+      :root {
+        /* 
+           In portrait, the card is rotated 90deg.
+           The "Width" (14 units) runs along the viewport Height (vh).
+           The "Height" (8.5 units) runs along the viewport Width (vw).
+        */
+        --unit: min(calc(95vh / 14), calc(95vw / 8.5));
+        
+        --card-width: calc(7 * var(--unit));
+        --card-height: calc(8.5 * var(--unit));
+      }
+
+      .layout-wrapper {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100vh;
+        height: 100vw;
+        transform: translate(-50%, -50%) rotate(90deg);
+      }
+      
+      .button-group {
+        margin-bottom: 40px;
+      }
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    /* 
+       2. PANORAMIC INSIDE LOGIC
+       The inside image covers the Center + Left Flap Back + Right Flap Back.
+       Total Width = 200% of the center card width.
+    */
+
+    /* CENTER PANEL (Middle 50% of the image) */
+    .card-inside {
+      position: absolute;
+      inset: 0;
+      background-color: #fff;
+      background-image: url("img/inside.png");
+      /* Image is 2x the width of this element */
+      background-size: 200% 100%; 
+      background-position: center center;
+      border-radius: var(--card-radius);
+      
+      /* UPDATED: Restored shadow strength (0.2) so the card pops */
+      box-shadow: 0 20px 30px rgba(0,0,0,0.2);
+      
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+    }
+
+    /* FLAP CONTAINER */
+    .card-flap {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 50%;
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 1;
+    }
+
+    .card-flap.left {
+      left: 0;
+      transform-origin: left center;
+      /* UPDATED: Round all corners */
+      border-radius: var(--card-radius);
+    }
+
+    .card-flap.right {
+      right: 0;
+      transform-origin: right center;
+      /* UPDATED: Round all corners */
+      border-radius: var(--card-radius);
+    }
+
+    /* FLAP FACES (Front & Back) */
+    .flap-front, .flap-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden; /* Hides the back side when flipped */
+      background-size: 100% 100%; /* Changed from 'cover' to stretch */
+      
+      /* UPDATED: Sharper shadow matching the center */
+      box-shadow: 0 20px 30px rgba(0,0,0,0.2);
+      
+      /* UPDATED: Ensure faces inherit the rounded corners */
+      border-radius: var(--card-radius);
+    }
+
+    /* FRONT FACES (The Cover) */
+    /* REMOVED: transform: translateZ(...) to remove thickness */
+    
+    .card-flap.left .flap-front {
+      background-image: url("img/left.png");
+      background-position: left center;
+      /* UPDATED: Full radius */
+      border-radius: var(--card-radius);
+      border-right: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .card-flap.right .flap-front {
+      background-image: url("img/right.png");
+      background-position: right center;
+      /* UPDATED: Full radius */
+      border-radius: var(--card-radius);
+      border-left: 1px solid rgba(0,0,0,0.1);
+    }
+
+    /* BACK FACES (The Inside Extensions) */
+    .flap-back {
+      background-image: url("img/inside.png");
+      transform: rotateY(180deg); /* Faces the opposite way initially */
+      background-color: #fff;
+      /* REMOVED: Global box-shadow from here */
+      box-shadow: none; 
+    }
+
+    /* REMOVED: .card-flap::after and edge styles (thickness logic) */
+
+    /* 
+       Left Flap Back: Shows the LEFT 25% of the panoramic image.
+       Since the flap is 1/4th the total width of the open spread, 
+       we scale the background to 400%.
+    */
+    .card-flap.left .flap-back {
+      background-size: 400% 100%;
+      background-position: left center;
+      /* UPDATED: Full radius */
+      border-radius: var(--card-radius);
+      
+      /* 
+         UPDATED: 
+         1. Restored opacity to 0.2 (matches center).
+         2. Added negative spread (-5px) and increased offset (-15px).
+         This pulls the shadow AWAY from the seam (right edge) so it's invisible there,
+         but visible on the outside.
+      */
+      box-shadow: -15px 20px 30px -5px rgba(0,0,0,0.2); 
+    }
+
+    /* 
+       Right Flap Back: Shows the RIGHT 25% of the panoramic image.
+    */
+    .card-flap.right .flap-back {
+      background-size: 400% 100%;
+      background-position: right center;
+      /* UPDATED: Full radius */
+      border-radius: var(--card-radius);
+      
+      /* UPDATED: Same logic (pulling shadow to the right, away from left seam) */
+      box-shadow: 15px 20px 30px -5px rgba(0,0,0,0.2);
+    }
+
+    /* OPEN STATE */
+    .card.open .card-flap.left {
+      transform: rotateY(-180deg);
+    }
+
+    .card.open .card-flap.right {
+      transform: rotateY(180deg);
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="layout-wrapper">
+    
+    <div class="button-group">
+      <button class="action-btn" id="toggleCard">
+        打开请柬<br>Open Invitation
+      </button>
+      <button class="action-btn" id="rsvpBtn">
+        回复<br>RSVP
+      </button>
+    </div>
+
+    <!-- RSVP Popup (Inside layout-wrapper so it rotates with the UI) -->
+    <div class="overlay" id="overlay"></div>
+    <div class="rsvp-popup" id="rsvpPopup">
+      <button class="action-btn" id="sendEmailBtn">
+        发送邮件<br>Send Email
+      </button>
+      <button class="action-btn" id="copyEmailBtn">
+        复制邮箱<br>Copy Email
+      </button>
+      <button class="action-btn" id="closeRsvpBtn" style="background: #888;">
+        关闭<br>Close
+      </button>
+    </div>
+
+    <div class="card-scene">
+      <div class="card" id="weddingCard">
+        
+        <!-- The Inside Content (Center) -->
+        <div class="card-inside">
+        </div>
+
+        <!-- The Left Door -->
+        <div class="card-flap left">
+          <div class="flap-front"></div>
+          <div class="flap-back"></div>
+        </div>
+
+        <!-- The Right Door -->
+        <div class="card-flap right">
+          <div class="flap-front"></div>
+          <div class="flap-back"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const card = document.getElementById("weddingCard");
+    const btn  = document.getElementById("toggleCard");
+    
+    // RSVP Elements
+    const rsvpBtn = document.getElementById("rsvpBtn");
+    const rsvpPopup = document.getElementById("rsvpPopup");
+    const overlay = document.getElementById("overlay");
+    const closeRsvpBtn = document.getElementById("closeRsvpBtn");
+    const sendEmailBtn = document.getElementById("sendEmailBtn");
+    const copyEmailBtn = document.getElementById("copyEmailBtn");
+
+    // REPLACE THIS WITH YOUR ACTUAL EMAIL
+    const emailAddress = "example@example.com"; 
+
+    // Toggle Card Logic
+    function toggle() {
+      const isOpen = card.classList.toggle("open");
+      if (isOpen) {
+        btn.innerHTML = "关闭请柬<br>Close Invitation";
+      } else {
+        btn.innerHTML = "打开请柬<br>Open Invitation";
+      }
+    }
+
+    btn.addEventListener("click", toggle);
+    card.addEventListener("click", toggle);
+
+    // RSVP Logic
+    function toggleRsvp() {
+      rsvpPopup.classList.toggle("visible");
+      overlay.classList.toggle("visible");
+    }
+
+    rsvpBtn.addEventListener("click", toggleRsvp);
+    closeRsvpBtn.addEventListener("click", toggleRsvp);
+    overlay.addEventListener("click", toggleRsvp);
+
+    // Send Email
+    sendEmailBtn.addEventListener("click", () => {
+      window.location.href = `mailto:${emailAddress}?subject=Wedding RSVP`;
+    });
+
+    // Copy Email
+    copyEmailBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(emailAddress).then(() => {
+        const originalText = copyEmailBtn.innerHTML;
+        copyEmailBtn.innerHTML = "已复制!<br>Copied!";
+        setTimeout(() => {
+          copyEmailBtn.innerHTML = originalText;
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
