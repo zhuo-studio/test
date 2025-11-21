@@ -46,6 +46,9 @@
       width: 100%;
       height: 100%;
       transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), width 0.6s, height 0.6s;
+      
+      /* NEW: Shift the visual center upwards to avoid bottom cutoff */
+      padding-bottom: 60px; 
     }
 
     /* BUTTON GROUP */
@@ -155,6 +158,9 @@
         width: 100vh;
         height: 100vw;
         transform: translate(-50%, -50%) rotate(90deg);
+        
+        /* Reset the padding in portrait mode so it stays centered */
+        padding-bottom: 0; 
       }
     }
 
@@ -382,10 +388,12 @@
       const ASPECT_W = 14;           
       const ASPECT_H = 8.5;          
       
-      // Reserve fixed vertical space for the buttons (approx 50px)
-      // This ensures buttons always fit, even on short landscape screens.
-      const BUTTON_SPACE = 50; 
-      const SAFE_MARGIN = 0.85; // Use 85% of the REMAINING space
+      // UPDATED: Increased from 50 to 110.
+      // The buttons + margins take up about 100px. 
+      // Setting this to 110 ensures the card calculation leaves enough room for them.
+      const BUTTON_SPACE = 110; 
+      
+      const SAFE_MARGIN = 0.90; // Use 90% of the REMAINING space
 
       let unit;
 
